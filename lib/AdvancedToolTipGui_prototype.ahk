@@ -208,9 +208,9 @@ class Table {
 		}
 		
 		this.rows[rowIndex][cellIndex] := {}
-		this.rows[rowIndex][cellIndex].value := " " value " "	; add spaces as table padding
+		this.rows[rowIndex][cellIndex].value := " " value " " ; add spaces as table padding
 		this.rows[rowIndex][cellIndex].font := StrLen(font) ? font : this.font
-		size := this.MeasureText(this.rows[rowIndex][cellIndex].value, this.fontSize + 2, font)
+		size := this.MeasureText(this.rows[rowIndex][cellIndex].value, this.fontSize + 2, this.rows[rowIndex][cellIndex].font)
 		this.rows[rowIndex][cellIndex].height := size.H
 		this.rows[rowIndex][cellIndex].width := (not StrLen(value) and isSpacingCell) ? 10 : size.W
 		this.rows[rowIndex][cellIndex].alignment := StrLen(alignment) ? alignment : "left"		

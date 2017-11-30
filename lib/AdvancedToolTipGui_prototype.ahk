@@ -23,14 +23,16 @@ Phys DPS:   147.0     Q20 Phys:   162.3
 Total DPS:  183.0     Q20 Total:  198.3
 */
 
-;Gui, TTbg:New, +AlwaysOnTop +ToolWindow +hwndTTbgHWnd
-;Gui, TTbg:Color, 000000
+BorderColor := "a65b24"
+BorderWidth := 2
+GuiMargin := BorderWidth + 5
 Gui, TT:New, +AlwaysOnTop +ToolWindow +hwndTTHWnd
+Gui, TT:Margin, %GuiMargin%, %GuiMargin%
 
 ;--------------
-table01 := new Table("TT", "t01", "t01H", 9, "Consolas", "FEFEFE", false)
+table01 := new Table("TT", "t01", "t01H", 9, "Consolas", "FEFEFE", true)
 table01.AddCell(1, 1, item.name, "", "", "", "Trans", "", true)
-table01.AddCell(1, 1, item.basetype, "", "", "", "Trans", "", true)
+table01.AddCell(2, 1, item.basetype, "", "", "", "Trans", "", true)
 
 ;--------------
 table02 := new Table("TT", "t02", "t02H", 9, "Consolas", "FEFEFE", true)
@@ -65,29 +67,23 @@ table02.AddCell(5, 3, "", "", "", "", "", "", true)
 table02.AddCell(5, 4, "Q20 Total:", "", "", "", "", "strike", true)
 table02.AddCell(5, 5, item.dps.qtotal)
 
-;table01.drawTable()
-table02.drawTable()
+table01.drawTable(GuiMargin)
+table02.drawTable(GuiMargin)
 
 Gui, TT:Color, 000000
-Gui, TT:Show, AutoSize, CustomTooltip
+; maximize the window before removing the borders/title bar etc
+; otherwise there will be some remants visible that aren't really part of the gui
+Gui, TT:Show, AutoSize Maximize, CustomTooltip
 
 WinSet, ExStyle, +0x20, ahk_id %TTHWnd% ; 0x20 = WS_EX_CLICKTHROUGH
-;WinSet, TransColor, FF0001 255, ahk_id %TTHWnd%
 WinSet, Transparent, 200, ahk_id %TTHWnd%
 WinSet, Style, -0xC00000, A
+; restore window to actual size
+Gui, TT:Show, AutoSize Restore, CustomTooltip
 
-; get text gui dimensions
-;WinGetPos, ttXPos, ttYPos, ttWidth, ttHeight, ahk_id %TTHWnd%
-; show bg gui again, now with dimensions/positions
-;Gui, TTbg:Show, w%ttWidth% h%ttHeight% x%ttXPos% y %ttYPos%
-;WinSet, ExStyle, +0x20, ahk_id %TTbgHWnd% ; 0x20 = WS_EX_CLICKTHROUGH
-;WinSet, Style, -0xC00000, A
-;WinSet, TransColor, FFFFFF 200, ahk_id %TTbgHWnd%
-
-; show text gui again to have it on top
-;Gui, TT:Show, AutoSize, CustomTooltip
-;DllCall("SetParent", "uint", TTBGHWnd, "uint", TTHWnd)
-
+; add a border to the window
+WinGetPos, TTX, TTY, TTW, TTH, ahk_id %TTHwnd%
+GuiAddBorder(BorderColor, BorderWidth, TTW, TTH, "TT", TTHWnd)
 
 Return
 GuiClose:
@@ -107,7 +103,7 @@ class Table {
 		this.showGrid := grid
 	}
 	
-	DrawTable(tableXPos = "", tableYPos = "") {
+	DrawTable(guiMargin = 5, tableXPos = "", tableYPos = "") {
 		columnWidths := []		
 		rowHeights := []		
 		Loop, % this.maxColumns {
@@ -123,45 +119,37 @@ class Table {
 			For k, cell in row {
 				h := (h >= cell.height) ? h : cell.height
 			}
-			rowHeights.push(h) 
+			rowHeights.push(h)
 		}
-		;debugprintarray(columnwidths)
-		;debugprintarray(rowHeights)
 		
 		guiName := this.GuiName
 		guiFontOptions := " s" this.fontSize
 		guiFontOptions .= StrLen(this.fColor) ? " c" this.fColor : ""
 		Gui, %guiName%Font, %guiFontOptions%, % this.font 
 		
-		shiftY := 0
+		shiftY := 0		
+		tableXPos := not StrLen(tableXPos) ? "x" guiMargin : tableXPos
+		tableYPos := not StrLen(tableYPos) ? "y+" guiMargin : tableYPos
 		
-		tableXPos := not StrLen(tableXPos) ? "x+10" : tableXPos
-		tableYPos := not StrLen(tableYPos) ? "y+10" : tableYPos
-	;	Gui, %guiName%Add, Text, w0 h0 %tableXPos% %tableYPos%, % ""
-		;msgbox % tablexpos " " tableypos
 		For key, row in this.rows {
-			shiftY += 15
+			height := rowHeights[key] + Round((this.fontSize / 3))
+			shiftY += height - 1
+			shiftY := height - 1
+			
 			For k, cell in row {
 				addedBackground := false
-				width := columnWidths[k] + 20
-				height := rowHeights[key] + (this.fontSize / 3)
-				
+				width := columnWidths[k] + 20				
+
 				If (k = 1 and key = 1) {
 					yPos := " " tableYPos
 				} Else If (k = 1) {
-					yPos := " y" shiftY
+					yPos := " yp+" shiftY				
 				} Else {
 					yPos := " yp+0"
 				}
 
-				;yPos := k = 1 ? " y" shiftY : " yp+0"
-				If (k = 1 and key = 1) {
+				If (k = 1) {
 					xPos := " " tableXPos					
-				}
-				Else If (k = 1) {
-					xPos := " x10"
-				} Else If (not this.showGrid) {
-					xPos := " x+5"
 				} Else {
 					xPos := " x+-1"
 				}
@@ -172,7 +160,7 @@ class Table {
 				options .= " h" height
 				
 				If (k = 1 and key = 1) {
-					options .= " Section"
+					;options .= " Section"
 				}
 
 				If (cell.bgColor = "Trans") {
@@ -205,6 +193,7 @@ class Table {
 					options .= " " cell.alignment
 				}
 				
+				;msgbox % options
 				Gui, %guiName%Add, Text, %options%, % cell.value
 				If (cell.fColor or cell.font) {
 					Gui, %guiName%Font, %guiFontOptions% " norm", % this.font 
@@ -252,4 +241,32 @@ class Table {
 		Size.H := NumGet(RECT, 12, "Int")
 		Return Size
 	}
+}
+
+GuiAddBorder(Color, Width, pW, pH, GuiName = "", parentHwnd = "") {
+	; -------------------------------------------------------------------------------------------------------------------------------
+	; Color        -  border color as used with the 'Gui, Color, ...' command, must be a "string"
+	; Width        -  the width of the border in pixels
+	; pW, pH	   -  the width and height of the parent window.
+	; GuiName	   -  the name of the parent window.
+	; parentHwnd   -  the ahk_id of the parent window.
+	;                 You should not pass other control options!
+	; -------------------------------------------------------------------------------------------------------------------------------
+	LFW := WinExist() ; save the last-found window, if any
+	If (not GuiName and parentHwnd) {		
+		DefGui := A_DefaultGui ; save the current default GUI		
+	}
+	
+	Gui, TTBorder:New, +Parent%parentHwnd% +LastFound -Caption +hwndBorderW
+	Gui, TTBorder:Color, %Color%
+	X1 := Width, X2 := pW - Width, Y1 := Width, Y2 := pH - Width
+	WinSet, Region, 0-0 %pW%-0 %pW%-%pH% 0-%pH% 0-0   %X1%-%Y1% %X2%-%Y1% %X2%-%Y2% %X1%-%Y2% %X1%-%Y1%, ahk_id %BorderW%
+	Gui, TTBorder:Show, x0 y0 w%pW% h%pH%
+	
+	If (not GuiName and parentHwnd) {	
+		Gui, %DefGui%:Default ; restore the default Gui
+	}
+	
+	If (LFW) ; restore the last-found window, if any
+		WinExist(LFW)
 }

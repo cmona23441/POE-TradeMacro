@@ -2412,6 +2412,7 @@ class RequestParams_ {
 	sockets_a_max	:= ""
 	shaper		:= ""
 	elder		:= ""
+	map_series 	:= ""
 
 	ToPayload() {
 		modGroupStr := ""
@@ -2514,13 +2515,14 @@ class _ParamMod {
 	mod_name	:= ""
 	mod_min	:= ""
 	mod_max	:= ""
+	mod_weight := ""
+	
 	ToPayload()
 	{
-		;this.mod_name	:= TradeUtils.UriEncode(this.mod_name)
-		;p := "&mod_name=" this.mod_name "&mod_min=" this.mod_min "&mod_max=" this.mod_max
 		If (StrLen(this.mod_name)) {
 			p .= "&mod_name=" TradeUtils.UriEncode(this.mod_name)
-			p .= "&mod_min="  TradeUtils.UriEncode(this.mod_min) "&mod_max="   TradeUtils.UriEncode(this.mod_max)
+			p .= "&mod_min="  TradeUtils.UriEncode(this.mod_min) "&mod_max=" TradeUtils.UriEncode(this.mod_max)
+			p .= "&mod_weight=" TradeUtils.UriEncode(this.mod_weight)
 		}
 
 		Return p

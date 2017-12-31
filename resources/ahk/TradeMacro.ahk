@@ -4520,7 +4520,6 @@ TradeFunc_PreventClipboardGarbageAfterInit() {
 }
 
 ResetWinHttpProxy:
-	PoEScripts_RunAsAdmin()
 	RunWait %comspec% /c netsh winhttp reset proxy ,,Hide
 	Run, "%A_AhkPath%" "%A_ScriptDir%\Run_TradeMacro.ahk"
 	ExitApp
